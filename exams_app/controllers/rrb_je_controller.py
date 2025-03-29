@@ -17,7 +17,8 @@ class RRBJEController:
         }
 
             
-            response = requests.get(url, headers=headers)session = requests.Session()
+            response = requests.get(url, headers=headers)
+            session = requests.Session()
             session.headers.update(headers)
             session.get("https://rrb.digialm.com/")  
             response = session.get(url)
