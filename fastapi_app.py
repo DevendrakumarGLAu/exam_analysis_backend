@@ -3,7 +3,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from exams_app.api_v1.exam_api_v1 import api_router
 
 app = FastAPI()
-
+@app.get("/")
+def read_root():
+    return {"message": "FastAPI is running!"}
 # ✅ Add CORS Middleware
 app.add_middleware(
     CORSMiddleware,
