@@ -6,17 +6,17 @@ from exams_app.controllers.marking_scheme.sscCGL import SSCCGLMarks
 class SSCExamController:
     @staticmethod
     def fetch_ssc_exam_data(url: str, category: str, horizontal_category: str, exam_language: str, exam_type: str, password: str):
-        try:
-            headers = {
+        headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
-            "Referer": "https://rrb.digialm.com/",  # This tells the site where the request is coming from
+            "Referer": "https://rrb.digialm.com/",
             "Accept-Language": "en-US,en;q=0.9",
         }
 
+        session = requests.Session()  # Create a session
+        session.headers.update(headers)
             
-            session = requests.Session()
-            session.headers.update(headers)
-            session.get("https://rrb.digialm.com/")  
+        try:
+            session.get("https://rrb.digialm.com/") 
             response = session.get(url)
             if response.status_code == 403:
                 return {"error": "Access forbidden. The website is blocking this request."}

@@ -6,6 +6,14 @@ app = FastAPI()
 @app.get("/")
 def read_root():
     return {"message": "FastAPI is running!"}
+    
+@app.get("/test-external-request")
+def test_external_request():
+    try:
+        response = requests.get("https://httpbin.org/ip")
+        return {"status_code": response.status_code, "response": response.json()}
+    except Exception as e:
+        return {"error": str(e)}
 # ✅ Add CORS Middleware
 app.add_middleware(
     CORSMiddleware,
