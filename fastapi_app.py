@@ -1,12 +1,13 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from exams_app.api_v1.exam_api_v1 import api_router
+import requests
 
 app = FastAPI()
 @app.get("/")
 def read_root():
     return {"message": "FastAPI is running!"}
-    
+
 @app.get("/test-external-request")
 def test_external_request():
     try:
