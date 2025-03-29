@@ -14,7 +14,10 @@ class SSCExamController:
         }
 
             
-            response = requests.get(url, headers=headers)
+            session = requests.Session()
+            session.headers.update(headers)
+            session.get("https://rrb.digialm.com/")  
+            response = session.get(url)
             if response.status_code == 403:
                 return {"error": "Access forbidden. The website is blocking this request."}
             elif response.status_code != 200:
