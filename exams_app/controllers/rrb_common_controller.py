@@ -5,7 +5,7 @@ from datetime import datetime
 
 from exams_app.controllers.marking_scheme.rrb_marks import RRBMarks
 from exams_app.controllers.marking_scheme.sscCGL import SSCCGLMarks
-from exams_app.models import Question, RRBNTPCExamResult, SSCCGLExamResult
+from exams_app.models import Question, RRBNTPCExamResult, RRBSectionResult, SSCCGLExamResult, SectionResult
 
 class RRBExamsController:
     def fetch_rrb_exams_data(url: str, category: str, horizontal_category: str,
@@ -42,6 +42,7 @@ class RRBExamsController:
             # Extract Sections
             sections = []
             raw_questions = []
+            exam_title = exam_data.get("Subject", "hhh"),
             section_containers = soup.select(".grp-cntnr .section-cntnr")
             for section in section_containers:
                 section_label = section.select_one(".section-lbl .bold")
@@ -149,13 +150,14 @@ class RRBExamsController:
                     exam_date = datetime.strptime(exam_date_str,"%d/%m/%Y").date()
                 except ValueError:
                     exam_date = None
+                print("rrb zones",rrb_zone)
                 exam_result , created = RRBNTPCExamResult.objects.update_or_create(
                     roll_number=exam_data.get("Roll Number", "Unknown"),
                     defaults={
                         "candidate_name": exam_data.get("Candidate Name", "Unknown"),
-                        "venue_name": exam_data.get("Venue Name", "Unknown"),
+                        "venue_name": exam_data.get("Test Centre Name", "Unknown"),
                          "exam_date": exam_date,
-                         "exam_time": exam_data.get("Exam Time", "Unknown"),
+                         "exam_time": exam_data.get("Test Time", "Unknown"),
                          "category": category,
                           "rrb_zone": rrb_zone,
                          "horizontal_category": horizontal_category,
@@ -169,7 +171,19 @@ class RRBExamsController:
                     }
                 )
                 exam_result.sections.all().delete()
-                return {"success": f"Exam data for {exam_result.candidate_name} saved successfully!"}
+                
+                for section in sections:
+                    RRBSectionResult.objects.create(
+                        exam_result=exam_result,
+                        section_name=section["section_name"],
+                        total_questions=section["total_questions"],
+                        correct=section["correct"],
+                        wrong=section["wrong"],
+                        unattempted=section["unattempted"],
+                        raw_marks=section["raw_marks"]
+                    )
+
+                # return {"success": f"Exam data for {exam_result.candidate_name} saved successfully!"}
             # ✅ Filter sections to include only English and General Awareness
                 
             total_attempted = sum(section["correct"] + section["wrong"] for section in sections)

@@ -75,12 +75,29 @@ class RRBNTPCExamResult(models.Model):
     total_attempted = models.IntegerField()
     total_unattempted = models.IntegerField()
     total_wrong = models.IntegerField()
+    exam_title = models.CharField(max_length=255, blank=True, null=True)
     
     def __str__(self):
         return f"{self.candidate_name} - {self.exam_title}"
     
     class Meta:
         db_table = 'rrb_ntpc_examresult'
+        
+class RRBSectionResult(models.Model):
+    exam_result = models.ForeignKey(RRBNTPCExamResult, related_name='sections', on_delete=models.CASCADE)
+    section_name = models.CharField(max_length=255)
+    total_questions = models.IntegerField()
+    correct = models.IntegerField()
+    wrong = models.IntegerField()
+    unattempted = models.IntegerField()
+    raw_marks = models.FloatField()
+
+    def __str__(self):
+        return f"{self.section_name} - {self.exam_result.candidate_name}"
+
+    class Meta:
+        db_table = 'rrb_sectionresult'
+
 
     
 
