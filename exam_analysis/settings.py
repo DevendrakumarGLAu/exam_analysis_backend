@@ -83,9 +83,9 @@ WSGI_APPLICATION = 'exam_analysis.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'exam_analysis',  # Your database name
-        'USER': 'root',  # Your MySQL username
-        'PASSWORD': 'Dev@1997',  # Your MySQL password
+        'NAME': 'exam_analysis',
+        'USER': 'root',
+        'PASSWORD': 'mysql',
         'HOST': 'localhost',
         'PORT': '3306',
     }

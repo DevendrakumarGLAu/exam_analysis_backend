@@ -1,4 +1,5 @@
 # exams_app/api_v1/exam_api_v1.py
+from exams_app.controllers.rrb_common_controller import RRBExamsController
 from fastapi import APIRouter, HTTPException
 # from controllers.rrb_je_controller import RRBJEController  # Import the controller
 from exams_app.controllers.rrb_je_controller import RRBJEController
@@ -45,4 +46,18 @@ def scrape_exam_data(request:ScrapeRequest):
         return data
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred in ssc: {str(e)}")
+    
+@api_router.post("/rrb-exam-data")
+def fetch_rrb_exams_data(request:ScrapeRequest):
+    try:
+        data = RRBExamsController.fetch_rrb_exams_data(
+            request.url, request.category, request.Horizontalcategory,
+            request.Exam_Language, request.RRB_zone, request.password, request.exam_type
+        )
+        return data
+    except Exception as e:
+        return {
+            "status_code":500,
+            "detail":f"An error occurred in ssc: {str(e)}"
+        }
 

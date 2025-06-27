@@ -19,14 +19,6 @@ class RRBConstableController:
         session = requests.Session()  # Create a session
         session.headers.update(headers)
         try:
-        #     headers = {
-        #     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
-        #     "Referer": "https://rrb.digialm.com/",  # This tells the site where the request is coming from
-        #     "Accept-Language": "en-US,en;q=0.9",
-        # }
-            # response = requests.get(url)
-            # session = requests.Session()
-            # session.headers.update(headers)
             session.get("https://rrb.digialm.com/")  
             response = session.get(url)
             if response.status_code == 403:
@@ -34,10 +26,8 @@ class RRBConstableController:
             elif response.status_code != 200:
                 return {"error": f"Request failed: {response.status_code} {response.reason}"}
 
-            
             if response.status_code == 200:
                 soup = BeautifulSoup(response.text, "html.parser")
-                
                 # Extract Exam Details Table
                 table = soup.find('table', {'border': '1'})
                 exam_data = {}

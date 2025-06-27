@@ -19,7 +19,7 @@ class RRBJEController:
         session.headers.update(headers)
             
         try:
-            session.get("https://rrb.digialm.com/") 
+            # session.get("https://rrb.digialm.com/") 
             response = session.get(url)  
             response = session.get(url)
             if response.status_code == 403:

@@ -1,9 +1,17 @@
+import os
+import django
+
+# Setup Django before importing your models or routers that use Django ORM
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "exam_analysis.settings")
+django.setup()
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from exams_app.api_v1.exam_api_v1 import api_router
 import requests
 
 app = FastAPI()
+
 @app.get("/")
 def read_root():
     return {"message": "FastAPI is running!"}
@@ -15,15 +23,13 @@ def test_external_request():
         return {"status_code": response.status_code, "response": response.json()}
     except Exception as e:
         return {"error": str(e)}
-# ✅ Add CORS Middleware
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins (change this for security)
+    allow_origins=["*"],  # Adjust for production
     allow_credentials=True,
-    allow_methods=["*"],  # Allow all methods (GET, POST, PUT, DELETE, etc.)
-    allow_headers=["*"],  # Allow all headers
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
-# ✅ Include API Router
 app.include_router(api_router, prefix="/api/v1")
-

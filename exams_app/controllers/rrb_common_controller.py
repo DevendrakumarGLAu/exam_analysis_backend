@@ -3,40 +3,35 @@ import requests
 from datetime import datetime
 
 
+from exams_app.controllers.marking_scheme.rrb_marks import RRBMarks
 from exams_app.controllers.marking_scheme.sscCGL import SSCCGLMarks
-from exams_app.models import Question, SSCCGLExamResult
+from exams_app.models import Question, RRBNTPCExamResult, SSCCGLExamResult
 
-class SSCExamController:
-    @staticmethod
-    def fetch_ssc_exam_data(url: str, category: str, horizontal_category: str, exam_language: str, exam_type: str, password: str):
+class RRBExamsController:
+    def fetch_rrb_exams_data(url: str, category: str, horizontal_category: str,
+                        exam_language: str, rrb_zone: str,password:str, exam_type:str):
+        
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
             "Referer": "https://rrb.digialm.com/",
             "Accept-Language": "en-US,en;q=0.9",
         }
-
         session = requests.Session()  # Create a session
         session.headers.update(headers)
-            
         try:
-            # session.get("https://rrb.digialm.com/") 
+            session.get("https://rrb.digialm.com/") 
             response = session.get(url)
             if response.status_code == 403:
                 return {"error": "Access forbidden. The website is blocking this request."}
             elif response.status_code != 200:
                 return {"error": f"Request failed: {response.status_code} {response.reason}"}
-
-            response.raise_for_status()  # Raise an error for bad responses (4xx, 5xx)
-
+            
+            response.raise_for_status()
             soup = BeautifulSoup(response.text, "html.parser")
-
             exam_title_tag = soup.find("span", style=lambda value: value and "font-size:22px" in value)
             exam_title = exam_title_tag.text.strip() if exam_title_tag else "N/A"
-
-            # Extract Exam Details from the Table
             table = soup.find("table", {"border": "1"})
             exam_data = {}
-
             if table:
                 for row in table.find_all("tr"):
                     columns = row.find_all("td")
@@ -44,7 +39,6 @@ class SSCExamController:
                         key = columns[0].get_text(strip=True) if columns[0] else "Unknown"
                         value = columns[1].get_text(strip=True) if columns[1] else "Unknown"
                         exam_data[key] = value
-
             # Extract Sections
             sections = []
             raw_questions = []
@@ -100,8 +94,6 @@ class SSCExamController:
                     option_c = option_map.get(option_keys[2], "") if len(option_keys) > 2 else ""
                     option_d = option_map.get(option_keys[3], "") if len(option_keys) > 3 else ""
 
-
-                    
                     # Determine correctness
                     is_correct = False
                     if chosen_option_number == correct_answer_number:
@@ -124,7 +116,7 @@ class SSCExamController:
                         "correct_answer_number": correct_answer_number,
                         "is_correct": is_correct,
                     })
-                section_marks = SSCCGLMarks.calculate_marks(correct_count, wrong_count, not_attempted_count,exam_type)
+                section_marks = RRBMarks.calculate_marks(correct_count, wrong_count, not_attempted_count,exam_type)
 
                 sections.append({
                     "section_name": section_name,
@@ -147,9 +139,9 @@ class SSCExamController:
                         is_correct=q["is_correct"]
                     )
             total_marks=0
-            if exam_type=="ssc-cgl":
+            if exam_type=="rrb-ntpc-stage-1":
                 total_marks = sum(
-                    SSCCGLMarks.calculate_marks(section["correct"], section["wrong"], section["unattempted"],exam_type) 
+                    RRBMarks.calculate_marks(section["correct"], section["wrong"], section["unattempted"],exam_type) 
                     for section in sections
                 )
                 exam_date_str = exam_data.get("Exam Date", "01/01/2000")
@@ -157,7 +149,7 @@ class SSCExamController:
                     exam_date = datetime.strptime(exam_date_str,"%d/%m/%Y").date()
                 except ValueError:
                     exam_date = None
-                exam_result , created = SSCCGLExamResult.objects.update_or_create(
+                exam_result , created = RRBNTPCExamResult.objects.update_or_create(
                     roll_number=exam_data.get("Roll Number", "Unknown"),
                     defaults={
                         "candidate_name": exam_data.get("Candidate Name", "Unknown"),
@@ -165,6 +157,7 @@ class SSCExamController:
                          "exam_date": exam_date,
                          "exam_time": exam_data.get("Exam Time", "Unknown"),
                          "category": category,
+                          "rrb_zone": rrb_zone,
                          "horizontal_category": horizontal_category,
                          "language": exam_language,
                          "url": url,
@@ -173,31 +166,10 @@ class SSCExamController:
                         "total_attempted": sum(s["correct"] + s["wrong"] for s in sections),
                         "total_unattempted": sum(s["unattempted"] for s in sections),
                         "total_wrong": sum(s["wrong"] for s in sections),
-                        
                     }
                 )
                 exam_result.sections.all().delete()
                 return {"success": f"Exam data for {exam_result.candidate_name} saved successfully!"}
-            if exam_type=="ssc-cgl-II":
-                total_marks = sum(
-                    SSCCGLMarks.calculate_marks(section["correct"], section["wrong"], section["unattempted"],exam_type) 
-                    for section in sections
-                )
-            elif exam_type=="ssc_mts":               
-                sections = [
-                    section for section in sections 
-                    if section["section_name"] in ["General Awareness", "English Language and Comprehension"]
-                ]
-                total_marks = sum(
-                    SSCCGLMarks.calculate_marks(section["correct"], section["wrong"], section["unattempted"],exam_type) 
-                    for section in sections
-                )
-            else:
-                total_marks = sum(
-                    SSCCGLMarks.calculate_marks(section["correct"], section["wrong"], section["unattempted"],exam_type) 
-                    for section in sections
-                )
-                
             # ✅ Filter sections to include only English and General Awareness
                 
             total_attempted = sum(section["correct"] + section["wrong"] for section in sections)
@@ -215,58 +187,6 @@ class SSCExamController:
             }
 
             return extracted_data
-
-        # except requests.exceptions.RequestException as e:
-        #     return {"error": f"Request failed: {str(e)}"}
-
         except Exception as e:
             return {"error": f"An unexpected error occurred in {exam_type}: {str(e)}"}
-        
-    def save_exam_result(exam_data, sections, category, horizontal_category, exam_language, url, total_marks):
-        """
-        This function updates or creates an exam result in the database.
-        It also calculates total marks, and updates total_attempted, total_unattempted, and total_wrong.
 
-        :param exam_data: Exam data dictionary containing details like roll number, candidate name, etc.
-        :param sections: List of sections, each containing question data and marks information.
-        :param category: The category of the exam (e.g., General, OBC, SC, etc.).
-        :param horizontal_category: The horizontal category of the exam (e.g., PH, EXS, etc.).
-        :param exam_language: The language of the exam (e.g., English, Hindi, etc.).
-        :param url: The URL of the exam page.
-        :param total_marks: Total marks received in the exam.
-
-        :return: exam_result instance.
-        """
-    # Extract exam date from the data (default to None if not available)
-        exam_date_str = exam_data.get("Exam Date", "01/01/2000")
-        try:
-            exam_date = datetime.strptime(exam_date_str, "%d/%m/%Y").date()
-        except ValueError:
-            exam_date = None
-        
-        # Create or update the ExamResult record
-        exam_result, created = SSCCGLExamResult.objects.update_or_create(
-            roll_number=exam_data.get("Roll Number", "Unknown"),
-            defaults={
-                "candidate_name": exam_data.get("Candidate Name", "Unknown"),
-                "venue_name": exam_data.get("Venue Name", "Unknown"),
-                "exam_date": exam_date,
-                "exam_time": exam_data.get("Exam Time", "Unknown"),
-                "category": category,
-                "horizontal_category": horizontal_category,
-                "language": exam_language,
-                "url": url,
-                "subject": exam_data.get("Subject", "Unknown"),
-                "total_marks_received": total_marks,
-                "total_attempted": sum(s["correct"] + s["wrong"] for s in sections),
-                "total_unattempted": sum(s["unattempted"] for s in sections),
-                "total_wrong": sum(s["wrong"] for s in sections),
-            }
-        )
-
-        # Delete any existing sections associated with this exam result (before saving new sections)
-        exam_result.sections.all().delete()
-
-        return exam_result
-
-                    
