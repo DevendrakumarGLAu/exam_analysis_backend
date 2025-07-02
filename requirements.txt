@@ -17,4 +17,4 @@ python-dotenv==1.0.1
 uvicorn
 requests
 mysqlclient==2.2.0
-
+playwright

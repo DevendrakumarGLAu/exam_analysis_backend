@@ -2,50 +2,66 @@ from bs4 import BeautifulSoup
 import requests
 from datetime import datetime
 import logging
+from playwright.sync_api import sync_playwright
 
 from exams_app.controllers.marking_scheme.rrb_marks import RRBMarks
 from exams_app.controllers.marking_scheme.sscCGL import SSCCGLMarks
 from exams_app.models import Question, RRBNTPCExamResult, RRBSectionResult, SSCCGLExamResult, SectionResult
 
 class RRBExamsController:
+    def fetch_page_content_with_playwright(url):
+        try:
+            with sync_playwright() as p:
+                browser = p.chromium.launch(headless=True)
+                page = browser.new_page()
+                page.goto(url, timeout=60000)
+                html = page.content()
+                browser.close()
+                return html
+        except Exception as e:
+            logging.error(f"Playwright failed to fetch page: {e}")
+            raise
+
     def fetch_rrb_exams_data(url: str, category: str, horizontal_category: str,
                         exam_language: str, rrb_zone: str,password:str, exam_type:str):
         print("exam type",exam_type)
         logging.info("Inside fetch_rrb_exams_data()...")
-        headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-                  "(KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
-    "Referer": "https://rrb.digialm.com/",
-    "Accept-Language": "en-US,en;q=0.9",
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-    "Connection": "keep-alive",
-}
+        # headers = {
+        #             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+        #                         "(KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
+        #             "Referer": "https://rrb.digialm.com/",
+        #             "Accept-Language": "en-US,en;q=0.9",
+        #             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        #             "Connection": "keep-alive",
+        #         }
 
-        session = requests.Session()  # Create a session
-        session.headers.update(headers)
+        # session = requests.Session()  # Create a session
+        # session.headers.update(headers)
         try:
             logging.info("Sending initial session.get to homepage...")
             print("Sending initial session.get to homepage...")
-            session.get("https://rrb.digialm.com/") 
+            # session.get("https://rrb.digialm.com/") 
             logging.info(f"Requesting actual exam URL: {url}")
             print(f"Requesting actual exam URL: {url}")
-            response = session.get(url)
-            logging.info(f"Response status: {response.status_code}")
-            print(f"Response status: {response.status_code}")
-            print("line 31",response.status_code)
-            print("line 32",response.text[:500])
-            if response.status_code == 403:
-                return {"error": "Access forbidden. The website is blocking this request."}
-            elif response.status_code == 503:
-                return {"error": "503 Service Unavailable. Likely blocked on Render."}
-            elif response.status_code != 200:
-                return {"error": f"Request failed: {response.status_code} {response.reason}"}
+            # response = session.get(url)
+            # logging.info(f"Response status: {response.status_code}")
+            # print(f"Response status: {response.status_code}")
+            # print("line 31",response.status_code)
+            # print("line 32",response.text[:500])
+            # if response.status_code == 403:
+            #     return {"error": "Access forbidden. The website is blocking this request."}
+            # elif response.status_code == 503:
+            #     return {"error": "503 Service Unavailable. Likely blocked on Render."}
+            # elif response.status_code != 200:
+            #     return {"error": f"Request failed: {response.status_code} {response.reason}"}
             
             # response.raise_for_status()
-            print(response.status_code)
-            print(response.text[:500])
+            # print(response.status_code)
+            # print(response.text[:500])
+            html = RRBExamsController.fetch_page_content_with_playwright(url)
+            soup = BeautifulSoup(html, "html.parser")
             
-            soup = BeautifulSoup(response.text, "html.parser")
+            # soup = BeautifulSoup(response.text, "html.parser")
             exam_title_tag = soup.find("span", style=lambda value: value and "font-size:22px" in value)
             exam_title = exam_title_tag.text.strip() if exam_title_tag else "N/A"
             table = soup.find("table", {"border": "1"})
