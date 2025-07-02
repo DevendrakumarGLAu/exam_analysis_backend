@@ -10,7 +10,7 @@ from exams_app.models import Question, RRBNTPCExamResult, RRBSectionResult, SSCC
 class RRBExamsController:
     def fetch_rrb_exams_data(url: str, category: str, horizontal_category: str,
                         exam_language: str, rrb_zone: str,password:str, exam_type:str):
-        
+        print("exam type",exam_type)
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
             "Referer": "https://rrb.digialm.com/",
@@ -26,7 +26,9 @@ class RRBExamsController:
             elif response.status_code != 200:
                 return {"error": f"Request failed: {response.status_code} {response.reason}"}
             
-            response.raise_for_status()
+            # response.raise_for_status()
+            print(response.status_code)
+            print(response.text[:500])
             soup = BeautifulSoup(response.text, "html.parser")
             exam_title_tag = soup.find("span", style=lambda value: value and "font-size:22px" in value)
             exam_title = exam_title_tag.text.strip() if exam_title_tag else "N/A"
