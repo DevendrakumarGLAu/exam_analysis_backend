@@ -21,10 +21,15 @@ class RRBExamsController:
         session.headers.update(headers)
         try:
             logging.info("Sending initial session.get to homepage...")
+            print("Sending initial session.get to homepage...")
             session.get("https://rrb.digialm.com/") 
             logging.info(f"Requesting actual exam URL: {url}")
+            print(f"Requesting actual exam URL: {url}")
             response = session.get(url)
             logging.info(f"Response status: {response.status_code}")
+            print(f"Response status: {response.status_code}")
+            print("line 31",response.status_code)
+            print("line 32",response.text[:500])
             if response.status_code == 403:
                 return {"error": "Access forbidden. The website is blocking this request."}
             elif response.status_code == 503:
