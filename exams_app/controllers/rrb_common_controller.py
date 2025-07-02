@@ -7,7 +7,7 @@ from playwright.sync_api import sync_playwright
 from exams_app.controllers.marking_scheme.rrb_marks import RRBMarks
 from exams_app.controllers.marking_scheme.sscCGL import SSCCGLMarks
 from exams_app.models import Question, RRBNTPCExamResult, RRBSectionResult, SSCCGLExamResult, SectionResult
-
+import traceback
 class RRBExamsController:
     def fetch_page_content_with_playwright(url):
         try:
@@ -20,6 +20,7 @@ class RRBExamsController:
                 return html
         except Exception as e:
             logging.error(f"Playwright failed to fetch page: {e}")
+            logging.error(traceback.format_exc())  # log full traceback
             raise
 
     def fetch_rrb_exams_data(url: str, category: str, horizontal_category: str,
@@ -59,6 +60,7 @@ class RRBExamsController:
             # print(response.status_code)
             # print(response.text[:500])
             html = RRBExamsController.fetch_page_content_with_playwright(url)
+            print("html find")
             soup = BeautifulSoup(html, "html.parser")
             
             # soup = BeautifulSoup(response.text, "html.parser")

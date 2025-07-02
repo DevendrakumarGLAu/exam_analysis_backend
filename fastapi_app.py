@@ -1,3 +1,10 @@
+import sys
+import asyncio
+
+# On Windows, set the Proactor event loop early to fix subprocess errors
+if sys.platform == "win32":
+    asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
+
 import os
 import django
 
