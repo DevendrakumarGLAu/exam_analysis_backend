@@ -1,7 +1,7 @@
 from bs4 import BeautifulSoup
 import requests
 from datetime import datetime
-
+import logging
 
 from exams_app.controllers.marking_scheme.rrb_marks import RRBMarks
 from exams_app.controllers.marking_scheme.sscCGL import SSCCGLMarks
@@ -11,6 +11,7 @@ class RRBExamsController:
     def fetch_rrb_exams_data(url: str, category: str, horizontal_category: str,
                         exam_language: str, rrb_zone: str,password:str, exam_type:str):
         print("exam type",exam_type)
+        logging.info("Inside fetch_rrb_exams_data()...")
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
             "Referer": "https://rrb.digialm.com/",
@@ -19,16 +20,22 @@ class RRBExamsController:
         session = requests.Session()  # Create a session
         session.headers.update(headers)
         try:
+            logging.info("Sending initial session.get to homepage...")
             session.get("https://rrb.digialm.com/") 
+            logging.info(f"Requesting actual exam URL: {url}")
             response = session.get(url)
+            logging.info(f"Response status: {response.status_code}")
             if response.status_code == 403:
                 return {"error": "Access forbidden. The website is blocking this request."}
+            elif response.status_code == 503:
+                return {"error": "503 Service Unavailable. Likely blocked on Render."}
             elif response.status_code != 200:
                 return {"error": f"Request failed: {response.status_code} {response.reason}"}
             
             # response.raise_for_status()
             print(response.status_code)
             print(response.text[:500])
+            
             soup = BeautifulSoup(response.text, "html.parser")
             exam_title_tag = soup.find("span", style=lambda value: value and "font-size:22px" in value)
             exam_title = exam_title_tag.text.strip() if exam_title_tag else "N/A"
@@ -204,5 +211,6 @@ class RRBExamsController:
 
             return extracted_data
         except Exception as e:
+            logging.error(f"Exception occurred: {e}")
             return {"error": f"An unexpected error occurred in {exam_type}: {str(e)}"}
 
